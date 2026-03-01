@@ -209,3 +209,116 @@ class IBox:
         cur = "_" if self.active and int(time.time() * 2) % 2 == 0 else ""
         tx(s, self.val + cur, self.rect.x + 5, self.rect.y + 5, C_BLACK, fm12)
         tx(s, self.lbl, self.rect.x, self.rect.y - 15, C_DARK, f10)
+        class App:
+    def __init__(self):
+        self.W = 1100
+        self.H = 720
+        self.screen = pygame.display.set_mode((self.W, self.H), pygame.RESIZABLE)
+        pygame.display.set_caption("Dynamic Pathfinding Agent — NUCES")
+        self.clock = pygame.time.Clock()
+
+        self.ROWS     = 18
+        self.COLS     = 22
+        self.density  = 0.25
+        self.algo     = "A*"
+        self.heur     = "Manhattan"
+        self.dyn      = False
+        self.dyn_prob = 0.04
+        self.draw_mode = None
+
+        self.ibR = IBox("Rows",  self.ROWS,             3, 40)
+        self.ibC = IBox("Cols",  self.COLS,             3, 55)
+        self.ibD = IBox("Dens%", int(self.density*100), 0, 80)
+        self.ibs = [self.ibR, self.ibC, self.ibD]
+
+        self.grid     = None
+        self.start    = (0, 0)
+        self.goal     = (self.ROWS - 1, self.COLS - 1)
+        self.path     = []
+        self.pset     = set()
+        self.vis      = []
+        self.vstep    = 0
+        self.front_at = {}
+        self.front    = set()
+        self.apos     = None
+        self.ai       = 0
+        self.mode     = "idle"
+        self.lt       = 0
+        self.nv       = 0
+        self.pc       = 0
+        self.et       = 0.0
+        self.nwalls   = set()
+        self.rfsh     = 0
+        self._u       = {}
+
+        self.reset_grid()
+
+    def reset_grid(self):
+        self.grid = [[0] * self.COLS for _ in range(self.ROWS)]
+        self.goal = (self.ROWS - 1, self.COLS - 1)
+        self._clr()
+
+    def _clr(self):
+        self.path     = []
+        self.pset     = set()
+        self.vis      = []
+        self.vstep    = 0
+        self.front_at = {}
+        self.front    = set()
+        self.apos     = None
+        self.ai       = 0
+        self.mode     = "idle"
+        self.nv       = 0
+        self.pc       = 0
+        self.et       = 0.0
+        self.nwalls   = set()
+        self.rfsh     = 0
+
+    def gen_maze(self):
+        self._clr()
+        self.grid = [[0] * self.COLS for _ in range(self.ROWS)]
+        for r in range(self.ROWS):
+            for c in range(self.COLS):
+                if (r, c) not in (self.start, self.goal):
+                    if random.random() < self.density:
+                        self.grid[r][c] = 1
+
+    @property
+    def gx(self): return LEFT_W
+    @property
+    def gy(self): return TOP_H
+    @property
+    def gw(self): return self.W - LEFT_W
+    @property
+    def gh(self): return self.H - TOP_H
+    @property
+    def cs(self):
+        return max(min(self.gw // self.COLS, self.gh // self.ROWS), 4)
+    @property
+    def ox(self): return self.gx + (self.gw - self.cs * self.COLS) // 2
+    @property
+    def oy(self): return self.gy + (self.gh - self.cs * self.ROWS) // 2
+
+    def p2c(self, mx, my):
+        cs = self.cs
+        c  = (mx - self.ox) // cs
+        r  = (my - self.oy) // cs
+        if 0 <= r < self.ROWS and 0 <= c < self.COLS:
+            return (r, c)
+        return None
+
+    def _apply_cfg(self):
+        nr = self.ibR.get(self.ROWS)
+        nc = self.ibC.get(self.COLS)
+        nd = self.ibD.get(int(self.density * 100))
+        self.density = nd / 100
+        ch = (nr != self.ROWS or nc != self.COLS)
+        self.ROWS = nr
+        self.COLS = nc
+        self.ibR.val = str(nr)
+        self.ibC.val = str(nc)
+        self.ibD.val = str(nd)
+        if ch:
+            self.start = (0, 0)
+            self.goal  = (nr - 1, nc - 1)
+            self.reset_grid()
