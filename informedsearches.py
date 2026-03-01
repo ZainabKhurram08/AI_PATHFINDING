@@ -322,3 +322,78 @@ class IBox:
             self.start = (0, 0)
             self.goal  = (nr - 1, nc - 1)
             self.reset_grid()
+            def _run(self, sov=None):
+        s  = sov or self.start
+        h  = HEUR[self.heur]
+        t0 = time.time()
+        fn = astar if self.algo == "A*" else gbfs
+        path, vis, nv, front_at = fn(self.grid, self.ROWS, self.COLS, s, self.goal, h)
+        self.et       = (time.time() - t0) * 1000
+        self.vis      = vis
+        self.nv       = nv
+        self.front_at = front_at
+        if path:
+            self.path  = path
+            self.pset  = set(path)
+            self.pc    = len(path) - 1
+            if sov is None:
+                self.vstep = 0
+                self.mode  = "searching"
+            else:
+                self.vstep = len(vis)
+                self.mode  = "running"
+                self.ai    = 0
+                self.apos  = path[0]
+        else:
+            self.path = []
+            self.pset = set()
+            self.mode = "no_path"
+        self.lt = time.time()
+        return path is not None
+
+    def _step(self):
+        if time.time() - self.lt < 0.04:
+            return
+        self.lt = time.time()
+        if self.mode == "searching":
+            self.vstep = min(self.vstep + 1, len(self.vis))
+            if self.vstep < len(self.vis):
+                node = self.vis[self.vstep]
+                self.front = self.front_at.get(node, set())
+            else:
+                self.front = set()
+            if self.vstep >= len(self.vis):
+                if self.path:
+                    self.mode = "running"
+                    self.ai   = 0
+                    self.apos = self.path[0]
+                else:
+                    self.mode = "no_path"
+        elif self.mode == "running":
+            self.ai += 1
+            if self.ai >= len(self.path):
+                self.mode = "done"
+                self.apos = self.goal
+            else:
+                self.apos = self.path[self.ai]
+                if self.dyn:
+                    self._spawn()
+            if self.rfsh > 0:
+                self.rfsh -= 1
+
+    def _spawn(self):
+        if random.random() > self.dyn_prob:
+            return
+        r    = random.randint(0, self.ROWS - 1)
+        c    = random.randint(0, self.COLS - 1)
+        cell = (r, c)
+        if cell in (self.start, self.goal, self.apos):
+            return
+        if self.grid[r][c] == 1:
+            return
+        self.grid[r][c] = 1
+        self.nwalls.add(cell)
+        if cell in set(self.path[self.ai:]):
+            sv = self.apos
+            self._run(sov=sv)
+            self.rfsh = 20
