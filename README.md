@@ -48,6 +48,7 @@ Click a mode then click/drag on the grid:
 - **Start** — move the start point
 - **Goal** — move the goal point
 
+<<<<<<< Updated upstream
 ### Actions
 - **START** — run the algorithm and animate
 - **Reset** — clear the grid
@@ -80,3 +81,26 @@ If the path is blocked, the agent re-plans automatically.
 | Grey | Wall |
 | Pink | Dynamically added wall |
 | Orange circle | Agent |
+=======
+Actions
+•	START: run the algorithm and animate
+•	Reset: clear the grid
+Dynamic Mode
+Toggle Dynamic to spawn random walls while the agent moves. If the path is blocked, the agent re-plans automatically.
+Stats (Top Bar)
+Metric	Description
+Nodes Visited:	Total nodes explored
+Path Cost:	Steps from start to goal
+Exec Time:	Algorithm runtime (ms)
+
+Color Guide
+Color	Meaning
+Yellow:	Frontier (open set)
+Cyan:	Visited (closed set)
+Green:	Final path
+Purple:	Start cell
+Red:	Goal cell
+Grey:	Wall
+Pink:	Dynamically added wall
+Orange circle:	Agent
+>>>>>>> Stashed changes
