@@ -103,3 +103,78 @@ def draw_btn(s, label, rect, active=False, hover=False, fn=None,
 
 def sec_hdr(s, lbl, x, y):
     tx(s, lbl, x, y, C_PURPLE, f13)
+    def hman(a, b):
+    return abs(a[0] - b[0]) + abs(a[1] - b[1])
+
+
+def heuc(a, b):
+    return math.hypot(a[0] - b[0], a[1] - b[1])
+
+
+HEUR = {"Manhattan": hman, "Euclidean": heuc}
+DIRS = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+
+
+def recon(cf, n):
+    p = []
+    while n is not None:
+        p.append(n)
+        n = cf[n]
+    return p[::-1]
+
+
+def astar(grid, R, C, s, g, h):
+    gs  = {s: 0}
+    cf  = {s: None}
+    heap = [(h(s, g), 0, s)]
+    vis  = set()
+    ord_ = []
+    front_at = {}
+    ctr  = 0
+    while heap:
+        f, gc, n = heapq.heappop(heap)
+        if n in vis:
+            continue
+        vis.add(n)
+        ord_.append(n)
+        front_at[n] = {x[2] for x in heap if x[2] not in vis}
+        if n == g:
+            return recon(cf, g), ord_, len(vis), front_at
+        r, c = n
+        for dr, dc in DIRS:
+            nb = (r + dr, c + dc)
+            if 0 <= nb[0] < R and 0 <= nb[1] < C and grid[nb[0]][nb[1]] != 1:
+                ng = gc + 1
+                if ng < gs.get(nb, 1e18):
+                    gs[nb] = ng
+                    cf[nb] = n
+                    ctr += 1
+                    heapq.heappush(heap, (ng + h(nb, g), ng, nb))
+    return None, ord_, len(vis), front_at
+
+
+def gbfs(grid, R, C, s, g, h):
+    cf   = {s: None}
+    heap = [(h(s, g), s)]
+    vis  = set()
+    ord_ = []
+    front_at = {}
+    ctr  = 0
+    while heap:
+        _, n = heapq.heappop(heap)
+        if n in vis:
+            continue
+        vis.add(n)
+        ord_.append(n)
+        front_at[n] = {x[1] for x in heap if x[1] not in vis}
+        if n == g:
+            return recon(cf, g), ord_, len(vis), front_at
+        r, c = n
+        for dr, dc in DIRS:
+            nb = (r + dr, c + dc)
+            if 0 <= nb[0] < R and 0 <= nb[1] < C and grid[nb[0]][nb[1]] != 1 and nb not in vis:
+                if nb not in cf:
+                    cf[nb] = n
+                ctr += 1
+                heapq.heappush(heap, (h(nb, g), nb))
+    return None, ord_, len(vis), front_at
