@@ -178,3 +178,34 @@ def gbfs(grid, R, C, s, g, h):
                 ctr += 1
                 heapq.heappush(heap, (h(nb, g), nb))
     return None, ord_, len(vis), front_at
+class IBox:
+    def __init__(self, lbl, default, mn, mx):
+        self.lbl    = lbl
+        self.val    = str(default)
+        self.mn     = mn
+        self.mx     = mx
+        self.active = False
+        self.rect   = pygame.Rect(0, 0, 52, 26)
+
+    def get(self, fb):
+        try:
+            return max(self.mn, min(int(self.val), self.mx))
+        except:
+            return fb
+
+    def key(self, ev):
+        if not self.active:
+            return
+        if ev.key == pygame.K_BACKSPACE:
+            self.val = self.val[:-1]
+        elif ev.unicode.isdigit() and len(self.val) < 3:
+            self.val += ev.unicode
+
+    def draw(self, s, mx, my):
+        hov = self.rect.collidepoint(mx, my)
+        bc  = C_PURPLE if self.active else ((140, 110, 210) if hov else (165, 148, 215))
+        rr(s, (238, 232, 255), self.rect, 4)
+        rrb(s, bc, self.rect, 2 if self.active else 1, 4)
+        cur = "_" if self.active and int(time.time() * 2) % 2 == 0 else ""
+        tx(s, self.val + cur, self.rect.x + 5, self.rect.y + 5, C_BLACK, fm12)
+        tx(s, self.lbl, self.rect.x, self.rect.y - 15, C_DARK, f10)
